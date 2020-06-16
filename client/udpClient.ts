@@ -1,6 +1,7 @@
 import { createSocket, Socket } from 'dgram';
 import * as fs from 'fs'
 import { exec } from 'child_process';
+import { crc32 } from 'crc';
 
 const host          : string = '127.0.0.1';
 const port          : number =  5800;
@@ -20,8 +21,25 @@ client.on('message', (messageContent, info) => {
 });
 
 
+
+
 fs.readFile(largeFilePath, (err, content) => {
     const messageBuffer = Buffer.from(content);
+
+    const packet : Packet = { ack: 0, crc: '', data: Buffer.from(''), sec: 0 }
+    const packet_mod : Packet = { ack: 0, crc: 'aa', data: Buffer.from(''), sec: 0 }
+    const packet_mad : Packet = { ack: 0, crc: '', data: Buffer.from('a'), sec: 0 }
+    const packet_mud : Packet = { ack: 0, crc: 'a', data: Buffer.from('a'), sec: 0 }
+    const packet_mid : Packet = { ack: 0, crc: 'a', data: Buffer.from('a'), sec: 0 }
+
+    console.log(`packet size: ${Buffer.byteLength(Buffer.from(JSON.stringify(packet)))}`);
+    console.log(`packet size mod: ${Buffer.byteLength(Buffer.from(JSON.stringify(packet_mod)))}`);
+    console.log(`packet size mad: ${Buffer.byteLength(Buffer.from(JSON.stringify(packet_mad)))}`);
+    console.log(`packet size mud: ${Buffer.byteLength(Buffer.from(JSON.stringify(packet_mud)))}`);
+    console.log(`packet size mid: ${Buffer.byteLength(Buffer.from(JSON.stringify(packet_mid)))}`);
+
+    var aaa = crc32('hello').toString(16);
+    console.log(` aaa ${aaa}`);
 
     console.log(`buffer size: ${Buffer.byteLength(messageBuffer)}`);
     
