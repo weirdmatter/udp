@@ -1,0 +1,25 @@
+{
+  "name": "udpsocket",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/munaretto/udpsocket.git"
+  },
+  "keywords": [],
+  "author": "Guilherme Munaretto e Larissa Salerno",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/munaretto/udpsocket/issues"
+  },
+  "homepage": "https://github.com/munaretto/udpsocket#readme",
+  "devDependencies": {
+    "@types/node": "^13.9.5",
+    "typescript": "^3.8.3"
+  }
+}
