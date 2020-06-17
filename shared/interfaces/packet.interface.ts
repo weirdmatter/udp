@@ -1,4 +1,4 @@
-interface Packet {
+export interface Packet {
     ack:   Number;
     crc:   String;
     data:  Buffer;

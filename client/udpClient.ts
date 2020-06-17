@@ -1,7 +1,8 @@
 import { createSocket, Socket } from 'dgram';
-import * as fs from 'fs'
-import { exec } from 'child_process';
-import { crc32 } from 'crc';
+import * as fs                  from 'fs'
+import { exec }                 from 'child_process';
+import { Packet }               from '../shared/interfaces/packet.interface';
+import { crc32 }                from 'crc';
 
 const host          : string = '127.0.0.1';
 const port          : number =  5800;
