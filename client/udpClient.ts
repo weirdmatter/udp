@@ -27,11 +27,11 @@ client.on('message', (messageContent, info) => {
 fs.readFile(largeFilePath, (err, content) => {
     const messageBuffer = Buffer.from(content);
 
-    const packet : Packet = { ack: 0, crc: '', data: Buffer.from(''), sec: 0 }
-    const packet_mod : Packet = { ack: 0, crc: 'aa', data: Buffer.from(''), sec: 0 }
-    const packet_mad : Packet = { ack: 0, crc: '', data: Buffer.from('a'), sec: 0 }
-    const packet_mud : Packet = { ack: 0, crc: 'a', data: Buffer.from('a'), sec: 0 }
-    const packet_mid : Packet = { ack: 0, crc: 'a', data: Buffer.from('a'), sec: 0 }
+    const packet : Packet = { ack: 0, crc: '', data: Buffer.from(''), seq: 0 }
+    const packet_mod : Packet = { ack: 0, crc: 'aa', data: Buffer.from(''), seq: 0 }
+    const packet_mad : Packet = { ack: 0, crc: '', data: Buffer.from('a'), seq: 0 }
+    const packet_mud : Packet = { ack: 0, crc: 'a', data: Buffer.from('a'), seq: 0 }
+    const packet_mid : Packet = { ack: 0, crc: 'a', data: Buffer.from('a'), seq: 0 }
 
     console.log(`packet size: ${Buffer.byteLength(Buffer.from(JSON.stringify(packet)))}`);
     console.log(`packet size mod: ${Buffer.byteLength(Buffer.from(JSON.stringify(packet_mod)))}`);

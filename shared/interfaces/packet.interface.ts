@@ -3,7 +3,7 @@ export interface Packet {
     crc:   String;
     data:  Buffer;
     pad?:  String;
-    sec:   Number;
+    seq:   Number;
 }
 
 
