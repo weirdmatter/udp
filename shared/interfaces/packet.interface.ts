@@ -1,9 +1,9 @@
 export interface Packet {
-    ack:   Number;
+    ack:   number;
     crc:   String;
     data:  Buffer;
     pad?:  String;
-    seq:   Number;
+    seq:   number;
 }
 
 
