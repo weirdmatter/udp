@@ -1,15 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// import { createSocket } from "dgram";
+var dgram_1 = require("dgram");
 var tcp_emulator_1 = require("./shared/tcp-emulator/tcp-emulator");
-// const server = createSocket('udp4');
-// server.on('message', (messageContent, rinfo) => {
-//     console.log(`Servidor recebeu '${messageContent}' de ${rinfo.address}:${rinfo.port}`);
-//     server.send(messageContent, rinfo.port, 'localhost', (error) => {
-//         if (error) throw error
-//         console.log(`Servidor responde '${messageContent}' para ${rinfo.address}:${rinfo.port}`);
-//     });
-// });
-// server.bind(5800);
+var environment_1 = require("./environment");
+var server = dgram_1.createSocket('udp4');
+var receivedPackets = [];
 var tcpEmulator = new tcp_emulator_1.TCPEmulator();
-tcpEmulator.startServerListeners();
+server.on('message', function (messageContent, rinfo) {
+    // console.log(`Servidor recebeu '${messageContent}' de ${rinfo.address}:${rinfo.port}`);
+    var parsedPacket = JSON.parse(messageContent.toString());
+    // Armazenar o pacote recebido
+    receivedPackets.push(parsedPacket);
+    // Monta o pacote de ack com base no pacote recebido e reenvia para o client
+    var ackPacket = tcpEmulator.buildAck(parsedPacket);
+    server.send(Buffer.from(JSON.stringify(ackPacket)), environment_1.environment.port, environment_1.environment.host, function (error) {
+        if (error) {
+            console.error("SERVIDOR: Erro ao enviar ACK " + ackPacket.ack + ". Erro - " + error);
+        }
+        else {
+            console.log("SERVIDOR: ACK " + ackPacket.ack + " enviado.:: " + error);
+        }
+    });
+});
+server.bind(environment_1.environment.port);

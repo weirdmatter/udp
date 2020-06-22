@@ -1,18 +1,38 @@
-// import { createSocket } from "dgram";
-import { TCPEmulator } from './shared/tcp-emulator/tcp-emulator';
+import { createSocket } from "dgram";
+import { Packet }       from "./shared/interfaces/packet.interface";
+import { TCPEmulator }  from './shared/tcp-emulator/tcp-emulator';
+import { environment } from './environment';
 
-// const server = createSocket('udp4');
+const server                        = createSocket('udp4');
+const receivedPackets : Packet[]    = [];
+const tcpEmulator                   = new TCPEmulator();
 
-// server.on('message', (messageContent, rinfo) => {
+server.on('message', (messageContent, rinfo) => {
     
-//     console.log(`Servidor recebeu '${messageContent}' de ${rinfo.address}:${rinfo.port}`);
+    // console.log(`Servidor recebeu '${messageContent}' de ${rinfo.address}:${rinfo.port}`);
 
-//     server.send(messageContent, rinfo.port, 'localhost', (error) => {
-//         if (error) throw error
-//         console.log(`Servidor responde '${messageContent}' para ${rinfo.address}:${rinfo.port}`);
-//     });
-// });
+    const parsedPacket = JSON.parse(messageContent.toString());
+    
+    // Armazenar o pacote recebido
+    receivedPackets.push(parsedPacket);
+    
+    // Monta o pacote de ack com base no pacote recebido e reenvia para o client
+    const ackPacket = tcpEmulator.buildAck(parsedPacket);
 
-// server.bind(5800);
-const tcpEmulator = new TCPEmulator();
-tcpEmulator.startServerListeners();
+    
+    server.send(
+        Buffer.from(JSON.stringify(ackPacket)), 
+        environment.port, 
+        environment.host, 
+        (error) => {
+            if (error) {
+                console.error(`SERVIDOR: Erro ao enviar ACK ${ackPacket.ack}. Erro - ${error}`);
+            }
+            else {
+                console.log(`SERVIDOR: ACK ${ackPacket.ack} enviado.`);
+            }   
+        }
+    );
+});
+server.bind(environment.port);
+

@@ -13,7 +13,7 @@ export class TCPEmulator {
     private numberOfPacketsToSend   : number;
 
     constructor() {
-        this.client                 = null
+        this.client                 = null;
         this.packets                = [];
         this.receivedAckPackets     = [];
         this.numberOfPacketsToSend  = 1;
@@ -61,14 +61,20 @@ export class TCPEmulator {
 
     private startClientListeners() {
 
-        this.client?.on('ack', (content : Packet, info) => {
+        console.log('CLIENT: Listeners iniciados...');
+        
+
+        this.client?.on('message', (content : Packet, info) => {
+
+            console.log('RECEBENDO ALGUMA COISA');
+            
 
             const nextPacket = this.packets.find((packet : Packet) => {
                 return content.ack === packet.seq
             });
 
             if (!nextPacket) {
-                console.log('Fim de transmissão.');
+                console.log('CLIENT: Fim de transmissão.');
                 this.flushPackets();
                 return;
             }
@@ -109,17 +115,17 @@ export class TCPEmulator {
 
     send() {
         if (!this.packets.length) {
-            console.log('Nenhum pacote encontrado.');
+            console.log('CLIENT: Nenhum pacote encontrado para envio.');
             return;
         }
-        console.log(`Enviando pacote ${this.packets[0].seq}...`);
+        console.log(`CLIENT: Enviando pacote ${this.packets[0].seq}...`);
         this.client?.send(
             Buffer.from(JSON.stringify(this.packets[0])), 
             environment.port, 
             environment.host,
             (err) => {
-                if (err) { console.error(`Erro ao enviar pacote: ${err}`); }
-                else     { console.log(`Pacote ${this.packets[0].seq} enviado.`); }
+                if (err) { console.error(`CLIENT: Erro ao enviar pacote: ${err}`); }
+                else     { console.log(`CLIENT: Pacote ${this.packets[0].seq} enviado.`); }
             }
         );
     }
@@ -128,23 +134,8 @@ export class TCPEmulator {
 
     }
 
-    buildAck(packet : Packet) {
-
+    buildAck(packet : Packet) : Packet {
+        packet.ack++;
+        return packet;
     }
-
-    startServerListeners() {
-        const server = createSocket('udp4');
-        
-        server.on('message', (messageContent, rinfo) => {
-            console.log(`Servidor recebeu '${messageContent}' de ${rinfo.address}:${rinfo.port}`);
-            
-            server.send(messageContent, rinfo.port, 'localhost', (error) => {
-                if (error) throw error
-                console.log(`Servidor responde '${messageContent}' para ${rinfo.address}:${rinfo.port}`);
-            });
-        });
-        server.bind(environment.port);
-    }
-
-
 }

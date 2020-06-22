@@ -5,7 +5,7 @@ var dgram_1 = require("dgram");
 var crc_1 = require("crc");
 var TCPEmulator = /** @class */ (function () {
     function TCPEmulator() {
-        this.client = null;
+        this.client = dgram_1.createSocket("udp4");
         this.packets = [];
         this.receivedAckPackets = [];
         this.numberOfPacketsToSend = 1;
@@ -45,12 +45,14 @@ var TCPEmulator = /** @class */ (function () {
     TCPEmulator.prototype.startClientListeners = function () {
         var _this = this;
         var _a;
-        (_a = this.client) === null || _a === void 0 ? void 0 : _a.on('ack', function (content, info) {
+        console.log('CLIENT: Listeners iniciados');
+        (_a = this.client) === null || _a === void 0 ? void 0 : _a.on('message', function (content, info) {
+            console.log('RECEBENDO ALGUMA COISA');
             var nextPacket = _this.packets.find(function (packet) {
                 return content.ack === packet.seq;
             });
             if (!nextPacket) {
-                console.log('Fim de transmissão.');
+                console.log('CLIENT: Fim de transmissão.');
                 _this.flushPackets();
                 return;
             }
@@ -84,35 +86,24 @@ var TCPEmulator = /** @class */ (function () {
         var _this = this;
         var _a;
         if (!this.packets.length) {
-            console.log('Nenhum pacote encontrado.');
+            console.log('CLIENT: Nenhum pacote encontrado para envio.');
             return;
         }
-        debugger;
-        console.log("Enviando pacote " + this.packets[0].seq + "...");
+        console.log("CLIENT: Enviando pacote " + this.packets[0].seq + "...");
         (_a = this.client) === null || _a === void 0 ? void 0 : _a.send(Buffer.from(JSON.stringify(this.packets[0])), environment_1.environment.port, environment_1.environment.host, function (err) {
             if (err) {
-                console.error("Erro ao enviar pacote: " + err);
+                console.error("CLIENT: Erro ao enviar pacote: " + err);
             }
             else {
-                console.log("Pacote " + _this.packets[0].seq + " enviado.");
+                console.log("CLIENT: Pacote " + _this.packets[0].seq + " enviado.");
             }
         });
     };
     TCPEmulator.prototype.buildPackets = function (data) {
     };
     TCPEmulator.prototype.buildAck = function (packet) {
-    };
-    TCPEmulator.prototype.startServerListeners = function () {
-        var server = dgram_1.createSocket('udp4');
-        server.on('message', function (messageContent, rinfo) {
-            console.log("Servidor recebeu '" + messageContent + "' de " + rinfo.address + ":" + rinfo.port);
-            server.send(messageContent, rinfo.port, 'localhost', function (error) {
-                if (error)
-                    throw error;
-                console.log("Servidor responde '" + messageContent + "' para " + rinfo.address + ":" + rinfo.port);
-            });
-        });
-        server.bind(environment_1.environment.port);
+        packet.ack++;
+        return packet;
     };
     return TCPEmulator;
 }());
