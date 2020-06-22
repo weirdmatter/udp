@@ -5,5 +5,3 @@ export interface Packet {
     pad?:  String;
     seq:   number;
 }
-
-

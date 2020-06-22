@@ -9,7 +9,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var dgram_1 = require("dgram");
 var fs = __importStar(require("fs"));
-var crc_1 = require("crc");
+var tcp_emulator_1 = require("../shared/tcp-emulator/tcp-emulator");
 var host = '127.0.0.1';
 var port = 5800;
 var smallFilePath = './misc/smallfile.txt';
@@ -24,22 +24,23 @@ client.on('message', function (messageContent, info) {
     client.close();
 });
 fs.readFile(largeFilePath, function (err, content) {
-    var messageBuffer = Buffer.from(content);
-    var packet = { ack: 0, crc: '', data: Buffer.from(''), sec: 0 };
-    var packet_mod = { ack: 0, crc: 'aa', data: Buffer.from(''), sec: 0 };
-    var packet_mad = { ack: 0, crc: '', data: Buffer.from('a'), sec: 0 };
-    var packet_mud = { ack: 0, crc: 'a', data: Buffer.from('a'), sec: 0 };
-    var packet_mid = { ack: 0, crc: 'a', data: Buffer.from('a'), sec: 0 };
-    console.log("packet size: " + Buffer.byteLength(Buffer.from(JSON.stringify(packet))));
-    console.log("packet size mod: " + Buffer.byteLength(Buffer.from(JSON.stringify(packet_mod))));
-    console.log("packet size mad: " + Buffer.byteLength(Buffer.from(JSON.stringify(packet_mad))));
-    console.log("packet size mud: " + Buffer.byteLength(Buffer.from(JSON.stringify(packet_mud))));
-    console.log("packet size mid: " + Buffer.byteLength(Buffer.from(JSON.stringify(packet_mid))));
-    var aaa = crc_1.crc32('hello').toString(16);
-    console.log(" aaa " + aaa);
-    console.log("buffer size: " + Buffer.byteLength(messageBuffer));
-    client.send(messageBuffer, 0, messageBuffer.length, port, host, function (err, bytes) {
-        if (err)
-            throw err;
-    });
+    // const messageBuffer = Buffer.from(content);
+    // const packet : Packet = { ack: 0, crc: '', data: Buffer.from(''), seq: 0 }
+    // const packet_mod : Packet = { ack: 0, crc: 'aa', data: Buffer.from(''), seq: 0 }
+    // const packet_mad : Packet = { ack: 0, crc: '', data: Buffer.from('a'), seq: 0 }
+    // const packet_mud : Packet = { ack: 0, crc: 'a', data: Buffer.from('a'), seq: 0 }
+    // const packet_mid : Packet = { ack: 0, crc: 'a', data: Buffer.from('a'), seq: 0 }
+    // console.log(`packet size: ${Buffer.byteLength(Buffer.from(JSON.stringify(packet)))}`);
+    // console.log(`packet size mod: ${Buffer.byteLength(Buffer.from(JSON.stringify(packet_mod)))}`);
+    // console.log(`packet size mad: ${Buffer.byteLength(Buffer.from(JSON.stringify(packet_mad)))}`);
+    // console.log(`packet size mud: ${Buffer.byteLength(Buffer.from(JSON.stringify(packet_mud)))}`);
+    // console.log(`packet size mid: ${Buffer.byteLength(Buffer.from(JSON.stringify(packet_mid)))}`);
+    // var aaa = crc32('hello').toString(16);
+    // console.log(` aaa ${aaa}`);
+    // console.log(`buffer size: ${Buffer.byteLength(messageBuffer)}`);
+    // client.send(messageBuffer, 0, messageBuffer.length, port, host, (err, bytes) => {
+    //     if (err) throw err;
+    // });
+    var tcpEmulator = new tcp_emulator_1.TCPEmulator();
+    tcpEmulator.startConnection();
 });

@@ -1,20 +1,22 @@
 import { environment }          from '../../environment';
 import { createSocket, Socket } from 'dgram';
-import { Packet } from '../interfaces/packet.interface';
-import { crc32 } from 'crc';
+import { Packet }               from '../interfaces/packet.interface';
+import { crc32 }                from 'crc';
 
 
 
 export class TCPEmulator {
 
-    private client              : Socket | null;
-    private packets             : Packet[];
-    private receivedAckPackets  : Packet[];
+    private client                  : Socket | null;
+    private packets                 : Packet[];
+    private receivedAckPackets      : Packet[];
+    private numberOfPacketsToSend   : number;
 
     constructor() {
         this.client                 = null
         this.packets                = [];
         this.receivedAckPackets     = [];
+        this.numberOfPacketsToSend  = 1;
     }
     
     startConnection() {
@@ -42,8 +44,7 @@ export class TCPEmulator {
             return this.addPadding(packet);
         });
 
-        this.send(this.packets[0]);
-
+        this.send();
     }
 
     private addPadding(packet : Packet) : Packet {
@@ -60,8 +61,6 @@ export class TCPEmulator {
 
     private startClientListeners() {
 
-        let numberOfPacketsToSend = 1;
-        
         this.client?.on('ack', (content : Packet, info) => {
 
             const nextPacket = this.packets.find((packet : Packet) => {
@@ -70,7 +69,7 @@ export class TCPEmulator {
 
             if (!nextPacket) {
                 console.log('Fim de transmissão.');
-                // this.closeConnection();
+                this.flushPackets();
                 return;
             }
 
@@ -84,19 +83,17 @@ export class TCPEmulator {
             }
 
             else {
+                // Limpa a lista de acks recebidos
                 this.flushReceivedAckPackets();
-                numberOfPacketsToSend++;
+            
+                // Remove o pacote já enviado da lista de pacotes
+                this.packets.splice(0, this.numberOfPacketsToSend);
                 
-                const startingPacketIndex = 1 + this.packets.findIndex((packet : Packet) => {
-                    return packet.seq === content.ack--;
-                });
-
-                /**
-                 * @TODO esta logica do slice precisa ser revista 
-                 * @TODO lembrar de implementar lógica de fila no envio dos pacotes (pode ser no método send)
-                 * */
-                const packetsToSend : Packet[] = this.packets.slice(startingPacketIndex, startingPacketIndex + numberOfPacketsToSend);
-                this.send(...packetsToSend);
+                // Aumenta o número de pacotes a ser enviado a cada vez
+                this.numberOfPacketsToSend = this.numberOfPacketsToSend * 2;
+            
+                this.packets = this.packets.slice(0, this.numberOfPacketsToSend);
+                this.send();
             }
         });
     }
@@ -110,11 +107,24 @@ export class TCPEmulator {
         this.receivedAckPackets = [];
     }
 
-    send(...data : Packet[]) {
-
+    send() {
+        if (!this.packets.length) {
+            console.log('Nenhum pacote encontrado.');
+            return;
+        }
+        console.log(`Enviando pacote ${this.packets[0].seq}...`);
+        this.client?.send(
+            Buffer.from(JSON.stringify(this.packets[0])), 
+            environment.port, 
+            environment.host,
+            (err) => {
+                if (err) { console.error(`Erro ao enviar pacote: ${err}`); }
+                else     { console.log(`Pacote ${this.packets[0].seq} enviado.`); }
+            }
+        );
     }
 
-    buildPacket(data : any) {
+    buildPackets(data : any) {
 
     }
 
