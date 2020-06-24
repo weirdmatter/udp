@@ -6,7 +6,7 @@ import { crc32 }                from 'crc';
 import { TCPEmulator } from '../shared/tcp-emulator/tcp-emulator';
 
 const host          : string = '127.0.0.1';
-const port          : number =  5800;
+const port          : number =  5801;
 const smallFilePath : string = './misc/smallfile.txt';
 const largeFilePath : string = './misc/largefile.txt';
 const client        : Socket = createSocket("udp4");
@@ -26,7 +26,7 @@ client.on('message', (messageContent, info) => {
 
 
 fs.readFile(largeFilePath, (err, content) => {
-    // const messageBuffer = Buffer.from(content);
+    const messageBuffer = Buffer.from(content);
 
     // const packet : Packet = { ack: 0, crc: '', data: Buffer.from(''), seq: 0 }
     // const packet_mod : Packet = { ack: 0, crc: 'aa', data: Buffer.from(''), seq: 0 }

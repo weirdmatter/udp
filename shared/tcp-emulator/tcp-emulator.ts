@@ -132,6 +132,31 @@ export class TCPEmulator {
 
     buildPackets(data : any) {
 
+        const array_packets : Packet[] = [];
+
+        const buffer_from_data = Buffer.from(data);
+
+        let crc_data;
+
+        for(let i = 0; i < 900000; i++) {
+
+            crc_data = crc32(Buffer.from('SYN')).toString(16)
+            
+
+            let packet : Packet = {ack: 0, crc: crc_data, data: Buffer.from('aaa'), seq: i};
+        }
+        //constroi o conteudo do pacote antes de inserir dados.
+        
+        array_packets.push(packet);
+
+        /**
+         *      ack:   number;
+                crc:   String;
+                data:  Buffer;
+                pad?:  String;
+                seq:   number;
+         */
+
     }
 
     buildAck(packet : Packet) : Packet {
