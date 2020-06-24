@@ -5,14 +5,13 @@ var dgram_1 = require("dgram");
 var crc_1 = require("crc");
 var TCPEmulator = /** @class */ (function () {
     function TCPEmulator() {
-        this.client = dgram_1.createSocket("udp4");
+        this.client = null;
         this.packets = [];
         this.receivedAckPackets = [];
         this.numberOfPacketsToSend = 1;
     }
     TCPEmulator.prototype.startConnection = function () {
         var _this = this;
-        this.client = dgram_1.createSocket("udp4");
         this.startClientListeners();
         var syn = {
             ack: 0,
@@ -31,7 +30,7 @@ var TCPEmulator = /** @class */ (function () {
         this.packets = this.packets.map(function (packet) {
             return _this.addPadding(packet);
         });
-        this.send();
+        this.send(this.packets[0]);
     };
     TCPEmulator.prototype.addPadding = function (packet) {
         return packet;
@@ -44,34 +43,37 @@ var TCPEmulator = /** @class */ (function () {
     };
     TCPEmulator.prototype.startClientListeners = function () {
         var _this = this;
-        var _a;
-        console.log('CLIENT: Listeners iniciados');
-        (_a = this.client) === null || _a === void 0 ? void 0 : _a.on('message', function (content, info) {
-            console.log('RECEBENDO ALGUMA COISA');
+        this.client = dgram_1.createSocket("udp4");
+        console.log('CLIENT: Listeners iniciados...');
+        this.client.on('message', function (content, info) {
+            var receivedPacket = JSON.parse(Buffer.from(content).toString());
+            ;
+            console.log("CLIENT: Recebido ACK " + receivedPacket.ack + ".");
             var nextPacket = _this.packets.find(function (packet) {
-                return content.ack === packet.seq;
+                return receivedPacket.ack === packet.seq;
             });
             if (!nextPacket) {
                 console.log('CLIENT: Fim de transmissão.');
                 _this.flushPackets();
                 return;
             }
-            var ackAlreadyReceived = _this.receivedAckPackets.find(function (pck) {
-                return pck.ack === content.ack;
+            _this.receivedAckPackets.push(receivedPacket);
+            var numberOfAcksToCurrPacket = _this.receivedAckPackets.map(function (pck) {
+                return pck.ack === receivedPacket.ack;
             });
-            if (ackAlreadyReceived) {
-                _this.receivedAckPackets.push(content);
+            // Se tem mais de um ack do mesmo pacote, então é necessário retransmitir
+            if (numberOfAcksToCurrPacket.length > 1) {
                 // tratamento de erro
             }
             else {
-                // Limpa a lista de acks recebidos
-                _this.flushReceivedAckPackets();
-                // Remove o pacote já enviado da lista de pacotes
-                _this.packets.splice(0, _this.numberOfPacketsToSend);
+                // Remove os pacotes já enviados da lista de pacotes
+                _this.packets = _this.packets.splice(_this.numberOfPacketsToSend);
                 // Aumenta o número de pacotes a ser enviado a cada vez
                 _this.numberOfPacketsToSend = _this.numberOfPacketsToSend * 2;
-                _this.packets = _this.packets.slice(0, _this.numberOfPacketsToSend);
-                _this.send();
+                // Separa os pacotes a serem enviados nesta leva
+                var packetsToSend = _this.packets.slice(0, _this.numberOfPacketsToSend);
+                // Envia os pacotes ao servidor
+                _this.send.apply(_this, packetsToSend);
             }
         });
     };
@@ -84,25 +86,31 @@ var TCPEmulator = /** @class */ (function () {
     };
     TCPEmulator.prototype.send = function () {
         var _this = this;
-        var _a;
+        var packets = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            packets[_i] = arguments[_i];
+        }
         if (!this.packets.length) {
             console.log('CLIENT: Nenhum pacote encontrado para envio.');
             return;
         }
-        console.log("CLIENT: Enviando pacote " + this.packets[0].seq + "...");
-        (_a = this.client) === null || _a === void 0 ? void 0 : _a.send(Buffer.from(JSON.stringify(this.packets[0])), environment_1.environment.port, environment_1.environment.host, function (err) {
-            if (err) {
-                console.error("CLIENT: Erro ao enviar pacote: " + err);
-            }
-            else {
-                console.log("CLIENT: Pacote " + _this.packets[0].seq + " enviado.");
-            }
+        packets.forEach(function (packet) {
+            var _a;
+            console.log("CLIENT: Enviando pacote " + packet.seq + "...");
+            (_a = _this.client) === null || _a === void 0 ? void 0 : _a.send(Buffer.from(JSON.stringify(packet)), environment_1.environment.port, environment_1.environment.host, function (err) {
+                if (err) {
+                    console.error("CLIENT: Erro ao enviar pacote: " + err);
+                }
+                else {
+                    console.log("CLIENT: Pacote " + packet.seq + " enviado.");
+                }
+            });
         });
     };
     TCPEmulator.prototype.buildPackets = function (data) {
     };
     TCPEmulator.prototype.buildAck = function (packet) {
-        packet.ack++;
+        packet.ack = packet.seq + 1;
         return packet;
     };
     return TCPEmulator;
