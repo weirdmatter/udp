@@ -22,8 +22,8 @@ server.on('message', (messageContent, rinfo) => {
     
     server.send(
         Buffer.from(JSON.stringify(ackPacket)), 
-        environment.port, 
-        environment.host, 
+        rinfo.port, 
+        rinfo.address, 
         (error) => {
             if (error) {
                 console.error(`SERVIDOR: Erro ao enviar ACK ${ackPacket.ack}. Erro - ${error}`);

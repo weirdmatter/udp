@@ -13,12 +13,12 @@ server.on('message', function (messageContent, rinfo) {
     receivedPackets.push(parsedPacket);
     // Monta o pacote de ack com base no pacote recebido e reenvia para o client
     var ackPacket = tcpEmulator.buildAck(parsedPacket);
-    server.send(Buffer.from(JSON.stringify(ackPacket)), environment_1.environment.port, environment_1.environment.host, function (error) {
+    server.send(Buffer.from(JSON.stringify(ackPacket)), rinfo.port, rinfo.address, function (error) {
         if (error) {
             console.error("SERVIDOR: Erro ao enviar ACK " + ackPacket.ack + ". Erro - " + error);
         }
         else {
-            console.log("SERVIDOR: ACK " + ackPacket.ack + " enviado.:: " + error);
+            console.log("SERVIDOR: ACK " + ackPacket.ack + " enviado.");
         }
     });
 });

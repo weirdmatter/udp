@@ -20,7 +20,6 @@ export class TCPEmulator {
     }
     
     startConnection() {
-        this.client = createSocket("udp4");
         this.startClientListeners();
         
         const syn : Packet = {
@@ -44,7 +43,7 @@ export class TCPEmulator {
             return this.addPadding(packet);
         });
 
-        this.send();
+        this.send(this.packets[0]);
     }
 
     private addPadding(packet : Packet) : Packet {
@@ -60,17 +59,18 @@ export class TCPEmulator {
     }
 
     private startClientListeners() {
-
+        this.client = createSocket("udp4");
         console.log('CLIENT: Listeners iniciados...');
         
 
-        this.client?.on('message', (content : Packet, info) => {
-
-            console.log('RECEBENDO ALGUMA COISA');
+        this.client!.on('message', (content : Buffer, info) => {
             
+            const receivedPacket = JSON.parse(Buffer.from(content).toString());;
 
+            console.log(`CLIENT: Recebido ACK ${receivedPacket.ack}.`);
+            
             const nextPacket = this.packets.find((packet : Packet) => {
-                return content.ack === packet.seq
+                return receivedPacket.ack === packet.seq
             });
 
             if (!nextPacket) {
@@ -79,27 +79,29 @@ export class TCPEmulator {
                 return;
             }
 
-            const ackAlreadyReceived = this.receivedAckPackets.find((pck : Packet) => {
-                return pck.ack === content.ack;
+            this.receivedAckPackets.push(receivedPacket);
+
+            const numberOfAcksToCurrPacket = this.receivedAckPackets.map((pck : Packet) => {
+                return pck.ack === receivedPacket.ack;
             });
 
-            if (ackAlreadyReceived) {
-                this.receivedAckPackets.push(content);
+            // Se tem mais de um ack do mesmo pacote, então é necessário retransmitir
+            if (numberOfAcksToCurrPacket.length > 1) { 
                 // tratamento de erro
             }
-
             else {
-                // Limpa a lista de acks recebidos
-                this.flushReceivedAckPackets();
-            
-                // Remove o pacote já enviado da lista de pacotes
-                this.packets.splice(0, this.numberOfPacketsToSend);
-                
+                // Remove os pacotes já enviados da lista de pacotes
+                this.packets = this.packets.splice(this.numberOfPacketsToSend);
+
                 // Aumenta o número de pacotes a ser enviado a cada vez
                 this.numberOfPacketsToSend = this.numberOfPacketsToSend * 2;
-            
-                this.packets = this.packets.slice(0, this.numberOfPacketsToSend);
-                this.send();
+
+                // Separa os pacotes a serem enviados nesta leva
+                const packetsToSend = this.packets.slice(0, this.numberOfPacketsToSend);
+                
+                // Envia os pacotes ao servidor
+                this.send(...packetsToSend);
+
             }
         });
     }
@@ -113,21 +115,28 @@ export class TCPEmulator {
         this.receivedAckPackets = [];
     }
 
-    send() {
+    send(...packets : Packet[]) {
         if (!this.packets.length) {
             console.log('CLIENT: Nenhum pacote encontrado para envio.');
             return;
         }
-        console.log(`CLIENT: Enviando pacote ${this.packets[0].seq}...`);
-        this.client?.send(
-            Buffer.from(JSON.stringify(this.packets[0])), 
-            environment.port, 
-            environment.host,
-            (err) => {
-                if (err) { console.error(`CLIENT: Erro ao enviar pacote: ${err}`); }
-                else     { console.log(`CLIENT: Pacote ${this.packets[0].seq} enviado.`); }
-            }
-        );
+
+        packets.forEach((packet : Packet) => {
+            
+            console.log(`CLIENT: Enviando pacote ${packet.seq}...`);
+
+            this.client?.send(
+                Buffer.from(JSON.stringify(packet)), 
+                environment.port, 
+                environment.host,
+                (err) => {
+                    if (err) { console.error(`CLIENT: Erro ao enviar pacote: ${err}`); }
+                    else     { console.log(`CLIENT: Pacote ${packet.seq} enviado.`); }
+                }
+            
+                );
+        });
+        
     }
 
     buildPackets(data : any) {
@@ -160,7 +169,7 @@ export class TCPEmulator {
     }
 
     buildAck(packet : Packet) : Packet {
-        packet.ack++;
+        packet.ack = packet.seq + 1;
         return packet;
     }
 }
