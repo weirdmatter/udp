@@ -24,17 +24,24 @@ export class TCPEmulator {
         
         const syn : Packet = {
             ack  : 0,
-            crc  : crc32(Buffer.from('SYN')).toString(16),
-            data : Buffer.from('SYN'),
+            crc  : crc32('SYN').toString(16),
+            data : 'SYN',
             seq  : 0,
         };
 
         const ackReceived : Packet = {
             ack  : 0,
-            crc  : crc32(Buffer.from('ACK_RECEIVED')).toString(16),
-            data : Buffer.from('ACK_RECEIVED'),
+            crc  : crc32('ACK_RECEIVED').toString(16),
+            data : 'ACK_RECEIVED',
             seq  : 1,
         };
+
+        const endOfFile : Packet = { 
+            ack  : 0,
+            crc  : crc32('END_OF_FILE').toString(16),
+            data : 'END_OF_FILE',
+            seq  : 2,
+        }
 
         this.packets.push(syn);
         this.packets.push(ackReceived);
@@ -64,17 +71,17 @@ export class TCPEmulator {
         
 
         this.client!.on('message', (content : Buffer, info) => {
+
+            if(!this.packets.length) {
+                console.log('CLIENT: Fim de transmissão.');
+            }
             
-            const receivedPacket = JSON.parse(Buffer.from(content).toString());;
+            const receivedPacket = JSON.parse(Buffer.from(content).toString());
 
             console.log(`CLIENT: Recebido ACK ${receivedPacket.ack}.`);
             
-            const nextPacket = this.packets.find((packet : Packet) => {
-                return receivedPacket.ack === packet.seq
-            });
-
-            if (!nextPacket) {
-                console.log('CLIENT: Fim de transmissão.');
+            if (receivedPacket.data === 'END_OF_FILE') {
+                this.send(receivedPacket);
                 this.flushPackets();
                 return;
             }
@@ -86,15 +93,12 @@ export class TCPEmulator {
             });
 
             // Se tem mais de um ack do mesmo pacote, então é necessário retransmitir
-            if (numberOfAcksToCurrPacket.length > 1) { 
-                // tratamento de erro
-            }
-            else {
+ 
                 // Remove os pacotes já enviados da lista de pacotes
                 this.packets = this.packets.splice(this.numberOfPacketsToSend);
 
                 // Aumenta o número de pacotes a ser enviado a cada vez
-                this.numberOfPacketsToSend = this.numberOfPacketsToSend * 2;
+                this.numberOfPacketsToSend = 2 ^ this.numberOfPacketsToSend;
 
                 // Separa os pacotes a serem enviados nesta leva
                 const packetsToSend = this.packets.slice(0, this.numberOfPacketsToSend);
@@ -102,7 +106,7 @@ export class TCPEmulator {
                 // Envia os pacotes ao servidor
                 this.send(...packetsToSend);
 
-            }
+            
         });
     }
 
@@ -122,8 +126,6 @@ export class TCPEmulator {
         }
 
         packets.forEach((packet : Packet) => {
-            
-            console.log(`CLIENT: Enviando pacote ${packet.seq}...`);
 
             this.client?.send(
                 Buffer.from(JSON.stringify(packet)), 
@@ -176,7 +178,7 @@ export class TCPEmulator {
                 packet_data = packet_data + buffer_from_data.toString().charAt(i);   
             }
             
-            packet_data = packet_data.replace(/(\r\n|\n|\r)/gm,'');;
+            packet_data = packet_data.replace(/(\r\n|\n|\r)/gm,'');
             
             i = iteration_limit;
             
@@ -213,13 +215,16 @@ export class TCPEmulator {
         }
 
         console.log("\nPacotes construídos.");
+        console.log("\nIniciando envio dos pacotes para o servidor.");
 
-        const final_packet = {ack: 0, crc: '', data: 'end_of_file', seq: packet_count + 1};
+        const final_packet = {ack: 0, crc: '', data: 'END_OF_FILE', seq: packet_count + 1};
 
         array_packets.push(final_packet);
 
-        return array_packets;
 
+        this.packets = array_packets;
+
+        return array_packets[0];
     }
 
     buildAck(packet : Packet) : Packet {

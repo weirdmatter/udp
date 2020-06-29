@@ -11,6 +11,7 @@ const smallFilePath : string = './misc/smallfile.txt';
 const largeFilePath : string = './misc/largefile.txt';
 const client        : Socket = createSocket("udp4");
 
+
 // Pegar arquivo
 // Gerar um buffer
 // Quebrar o buffer em um array
@@ -52,4 +53,8 @@ fs.readFile(largeFilePath, (err, content) => {
 
     const tcpEmulator = new TCPEmulator();
     tcpEmulator.startConnection();
+
+    const firstPacket = tcpEmulator.buildPackets(messageBuffer);
+
+    tcpEmulator.send(firstPacket);
 });
