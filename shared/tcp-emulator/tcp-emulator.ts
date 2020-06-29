@@ -141,30 +141,84 @@ export class TCPEmulator {
 
     buildPackets(data : any) {
 
+        console.log("Iniciando construção dos pacotes com o buffer de dados...");
+        
+        //crc will always have 8 bytes.
         const array_packets : Packet[] = [];
+
+        //iteration must stop in 512 - 8
+        //since crc will always have 8 bytes.
+        //iterate = 504
+        //now, take 504 - packet size.
+        //is the total amount to set data in each packet.
 
         const buffer_from_data = Buffer.from(data);
 
-        let crc_data;
+        const crc_size = 8;
 
-        for(let i = 0; i < 900000; i++) {
+        let packet : Packet = {ack: 0, crc: '', data: '', seq: 1};
 
-            crc_data = crc32(Buffer.from('SYN')).toString(16)
+        let iteration_limit = 512 - Buffer.byteLength(JSON.stringify(packet)) - crc_size;
+        let offset_iteration = 512 - Buffer.byteLength(JSON.stringify(packet)) - crc_size;
+
+        let packet_data = '';
+
+        let i = 0;
+        let packet_count = 0;
+
+        while(true) {
+
+            packet_count++;
+
+            packet.seq = packet_count;
+
+            for(i; i < iteration_limit; i++) {
+                packet_data = packet_data + buffer_from_data.toString().charAt(i);   
+            }
             
+            packet_data = packet_data.replace(/(\r\n|\n|\r)/gm,'');;
+            
+            i = iteration_limit;
+            
+            iteration_limit = iteration_limit + offset_iteration;
+            
+            packet.data = packet_data;
+            packet.crc = crc32(packet_data).toString(16);
+            
+            array_packets.push(packet);
+            
+            packet =  {ack: 0, crc: '', data: '', seq: packet_count};
+            packet_data = '';
 
-            let packet : Packet = {ack: 0, crc: crc_data, data: Buffer.from('aaa'), seq: i};
+            if(iteration_limit > Buffer.byteLength(data)) {
+                packet_count++;
+
+                packet.seq = packet_count;
+
+
+                for(i; i < iteration_limit; i++) {
+                    packet_data = packet_data + buffer_from_data.toString().charAt(i);   
+                }
+
+                packet_data = packet_data.replace(/(\r\n|\n|\r)/gm,'');
+
+                packet.data = packet_data;
+                packet.crc = crc32(packet_data).toString(16);
+            
+                array_packets.push(packet);
+
+                console.log('Fim da construção!');
+                break;
+            }
         }
-        //constroi o conteudo do pacote antes de inserir dados.
-        
-        array_packets.push(packet);
 
-        /**
-         *      ack:   number;
-                crc:   String;
-                data:  Buffer;
-                pad?:  String;
-                seq:   number;
-         */
+        console.log("\nPacotes construídos.");
+
+        const final_packet = {ack: 0, crc: '', data: 'end_of_file', seq: packet_count + 1};
+
+        array_packets.push(final_packet);
+
+        return array_packets;
 
     }
 
