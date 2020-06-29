@@ -9,7 +9,6 @@ var TCPEmulator = /** @class */ (function () {
         this.packets = [];
         this.receivedAckPackets = [];
         this.numberOfPacketsToSend = 1;
-        this.sizeof = require('object-sizeof');
     }
     TCPEmulator.prototype.startConnection = function () {
         this.startClientListeners();

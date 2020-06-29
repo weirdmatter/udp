@@ -9,14 +9,12 @@ export class TCPEmulator {
     private packets                 : Packet[];
     private receivedAckPackets      : Packet[];
     private numberOfPacketsToSend   : number;
-    private sizeof                  : any;
 
     constructor() {
         this.client                 = null;
         this.packets                = [];
         this.receivedAckPackets     = [];
         this.numberOfPacketsToSend  = 1;
-        this.sizeof                 = require('object-sizeof');
     }
     
     startConnection() {
@@ -57,7 +55,7 @@ export class TCPEmulator {
                 packet.pad += '0';
             }
             // console.log(`O pacote ${packet.seq} tem ${Buffer.byteLength(JSON.stringify(packet), 'utf8')} bytes`);
-        });
+        }); 
     }
 
     private flushPackets() {
