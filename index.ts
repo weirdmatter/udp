@@ -1,8 +1,8 @@
 import { createSocket } from "dgram";
-import { Packet } from "./shared/interfaces/packet.interface";
-import { TCPEmulator } from './shared/tcp-emulator/tcp-emulator';
-import { environment } from './environment';
-import fs from 'fs';
+import { Packet }       from "./shared/interfaces/packet.interface";
+import { TCPEmulator }  from './shared/tcp-emulator/tcp-emulator';
+import { environment }  from './environment';
+import fs               from 'fs';
 
 const server = createSocket('udp4');
 const receivedPackets: Packet[] = [];

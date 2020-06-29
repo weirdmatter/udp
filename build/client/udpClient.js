@@ -11,7 +11,7 @@ var dgram_1 = require("dgram");
 var fs = __importStar(require("fs"));
 var tcp_emulator_1 = require("../shared/tcp-emulator/tcp-emulator");
 var host = '127.0.0.1';
-var port = 5800;
+var port = 5801;
 var smallFilePath = './misc/smallfile.txt';
 var largeFilePath = './misc/largefile.txt';
 var client = dgram_1.createSocket("udp4");
@@ -24,7 +24,7 @@ client.on('message', function (messageContent, info) {
     client.close();
 });
 fs.readFile(largeFilePath, function (err, content) {
-    // const messageBuffer = Buffer.from(content);
+    var messageBuffer = Buffer.from(content);
     // const packet : Packet = { ack: 0, crc: '', data: Buffer.from(''), seq: 0 }
     // const packet_mod : Packet = { ack: 0, crc: 'aa', data: Buffer.from(''), seq: 0 }
     // const packet_mad : Packet = { ack: 0, crc: '', data: Buffer.from('a'), seq: 0 }
@@ -43,4 +43,6 @@ fs.readFile(largeFilePath, function (err, content) {
     // });
     var tcpEmulator = new tcp_emulator_1.TCPEmulator();
     tcpEmulator.startConnection();
+    var firstPacket = tcpEmulator.buildPackets(messageBuffer);
+    tcpEmulator.send(firstPacket);
 });

@@ -23,6 +23,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "crc": "^3.8.0"
+    "crc": "^3.8.0",
+    "object-sizeof": "^1.6.1"
   }
 }

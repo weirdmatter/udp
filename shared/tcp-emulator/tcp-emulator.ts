@@ -3,20 +3,20 @@ import { createSocket, Socket } from 'dgram';
 import { Packet }               from '../interfaces/packet.interface';
 import { crc32 }                from 'crc';
 
-
-
 export class TCPEmulator {
 
     private client                  : Socket | null;
     private packets                 : Packet[];
     private receivedAckPackets      : Packet[];
     private numberOfPacketsToSend   : number;
+    private sizeof                  : any;
 
     constructor() {
         this.client                 = null;
         this.packets                = [];
         this.receivedAckPackets     = [];
         this.numberOfPacketsToSend  = 1;
+        this.sizeof                 = require('object-sizeof');
     }
     
     startConnection() {
@@ -46,15 +46,19 @@ export class TCPEmulator {
         this.packets.push(syn);
         this.packets.push(ackReceived);
 
-        this.packets = this.packets.map((packet : Packet) => {
-            return this.addPadding(packet);
-        });
+        this.addPadding(this.packets);
 
         this.send(this.packets[0]);
     }
 
-    private addPadding(packet : Packet) : Packet {
-        return packet;
+    private addPadding(packets : Packet[]): void {
+        packets.forEach((packet : Packet) => {
+            while (this.sizeof(packet) < 512) {
+                packet.pad += '0';
+            }
+            console.log(`O pacote ${packet.seq} tem ${this.sizeof(packet)} bytes`);
+            
+        });
     }
 
     private flushPackets() {
@@ -223,6 +227,8 @@ export class TCPEmulator {
 
 
         this.packets = array_packets;
+
+        this.addPadding(this.packets);
 
         return array_packets[0];
     }
