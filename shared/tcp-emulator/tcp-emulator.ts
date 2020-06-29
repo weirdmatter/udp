@@ -3,8 +3,6 @@ import { createSocket, Socket } from 'dgram';
 import { Packet }               from '../interfaces/packet.interface';
 import { crc32 }                from 'crc';
 
-
-
 export class TCPEmulator {
 
     private client                  : Socket | null;
@@ -46,15 +44,18 @@ export class TCPEmulator {
         this.packets.push(syn);
         this.packets.push(ackReceived);
 
-        this.packets = this.packets.map((packet : Packet) => {
-            return this.addPadding(packet);
-        });
+        this.addPadding(this.packets);
 
         this.send(this.packets[0]);
     }
 
-    private addPadding(packet : Packet) : Packet {
-        return packet;
+    private addPadding(packets : Packet[]): void {
+        packets.forEach((packet : Packet) => {
+            while (Buffer.byteLength(JSON.stringify(packet), 'utf8') < 512) {
+                packet.pad += '0';
+            }
+            // console.log(`O pacote ${packet.seq} tem ${Buffer.byteLength(JSON.stringify(packet), 'utf8')} bytes`);
+        }); 
     }
 
     private flushPackets() {
@@ -223,6 +224,8 @@ export class TCPEmulator {
 
 
         this.packets = array_packets;
+
+        this.addPadding(this.packets);
 
         return array_packets[0];
     }
