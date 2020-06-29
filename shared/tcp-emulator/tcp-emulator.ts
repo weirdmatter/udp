@@ -53,11 +53,10 @@ export class TCPEmulator {
 
     private addPadding(packets : Packet[]): void {
         packets.forEach((packet : Packet) => {
-            while (this.sizeof(packet) < 512) {
+            while (Buffer.byteLength(JSON.stringify(packet), 'utf8') < 512) {
                 packet.pad += '0';
             }
-            console.log(`O pacote ${packet.seq} tem ${this.sizeof(packet)} bytes`);
-            
+            // console.log(`O pacote ${packet.seq} tem ${Buffer.byteLength(JSON.stringify(packet), 'utf8')} bytes`);
         });
     }
 

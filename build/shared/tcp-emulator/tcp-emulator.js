@@ -37,12 +37,11 @@ var TCPEmulator = /** @class */ (function () {
         this.send(this.packets[0]);
     };
     TCPEmulator.prototype.addPadding = function (packets) {
-        var _this = this;
         packets.forEach(function (packet) {
-            while (_this.sizeof(packet) < 512) {
+            while (Buffer.byteLength(JSON.stringify(packet), 'utf8') < 512) {
                 packet.pad += '0';
             }
-            console.log("O pacote " + packet.seq + " tem " + _this.sizeof(packet) + " bytes");
+            // console.log(`O pacote ${packet.seq} tem ${Buffer.byteLength(JSON.stringify(packet), 'utf8')} bytes`);
         });
     };
     TCPEmulator.prototype.flushPackets = function () {
